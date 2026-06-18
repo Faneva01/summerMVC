@@ -1,0 +1,23 @@
+Sprint 1:
+    +Au niveau framework
+    Mi creer classe controller ( ex: mg.itu.xxx.annotation.controller)
+
+    +Misy [code ] : -- Demmarage appli web ( Mampiasa listener : Na mbola tsy misy appel ary de efa demaré)
+                 : -- Soit au premier appel anle frontServlet (mampiasa methode init )
+
+
+    +Au niveau test:
+        Manambotra class TestController1 et TestController2 ( annoter na @Controller)
+
+    [code]:   - Ao anatin fron frontServlet : 
+                    Mampisy variable= List<String> listController
+                    fonction init(){
+                        maka list ana controller ao anatinle classpath ( izay misy annotation controller rehetre) ao amle test.
+                        Amin alalan le full name
+                    } 
+                annotation.Controller  :: -- ALL
+                                          -- Package
+
+
+    Ao anatin web.xml : mi declarer variable package 
+    Mila manana methode iray mi verifier hoe aiza no misy anito annotation ito (misy parama ).
