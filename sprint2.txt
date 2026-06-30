@@ -1,0 +1,11 @@
+1- Mi creer annotation type Methode ( azo apetraka amina methode), mila variable io
+
+2-  Partie test:
+    Manana TestController3 annote amina annotation class, manana methode isika ohatra hoe liste 
+        io annoter na amina ohatra hoe URLMapping( mandray parametre ohatra hoe /emp/new)
+
+annotation @Mapping("url")
+target: method
+=> Afficher url avec methode et son class associé ( url : Methode-> class)
+    - url qu'on connait: affiche tous les liste d'url qu'on connait
+    - url qu'on ne connait pas: erreur Exception qui dit qu'il ne connait pas cette urlet il lister le url qu il connait.
