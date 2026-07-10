@@ -1,13 +1,14 @@
 package mg.faneva.summermvc.mapping;
 
-public class MappingInfo {
+public class Mapping {
+
     private String className;
     private String methodName;
 
-    public MappingInfo(){
+    public Mapping() {
     }
 
-    public MappingInfo(String className, String methodName){
+    public Mapping(String className, String methodName) {
         this.className = className;
         this.methodName = methodName;
     }
@@ -15,13 +16,8 @@ public class MappingInfo {
     public String getClassName() {
         return className;
     }
+
     public String getMethodName() {
         return methodName;
-    }
-    public void setClassName(String className) {
-        this.className = className;
-    }
-    public void setMethodName(String methodName) {
-        this.methodName = methodName;
     }
 }
