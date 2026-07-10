@@ -1,0 +1,281 @@
+Sprint3:
+Gestion ana GET sy POST dans le mapping.
+- GET: /test  ==> Mi afficher page
+- POST /test  ==> Mi traiter formulaire
+
+Ohatra:
+    @RequestMapping("/test" , "GET")
+    @RequestMapping("/test", "POST")
+    Map<ure , MethodeInfo>
+        - Methode 1: Concatenenr l'URL
+            -GET:andrana ==> MappingInfo(TestController , andrana())
+            - "POST:andrana" ==> MappingInfo(TestController, sauvegarder())
+
+        - Methode 2: cree un autre class : urlMethode
+            - Methode il faut surcharger un Methode equals pour l'attribue Methode
+            C'est à dire l'annotation @RequestMapping doit prendre une deuxieme attribute Methode
+
+            Map<UrlMethode , MappingInfo>
+            urlMethode("andrana", "GET") ==> MappingInfo(TestController , andrana())
+            urlMethode("andrana","POST") ==> MappingInfo(TestController , sauvegarder())
+
+3b: Executer methode (appeller par l'url)
+==> println afficher dans console
+
+
+1. RequestMapping.java
+package mg.faneva.summermvc.annotation;
+
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+import java.lang.annotation.ElementType;
+
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.METHOD)
+public @interface RequestMapping {
+
+    String value();
+
+    String method();
+}
+2. UrlMethod.java
+
+Cette classe sera la clé de la HashMap.
+
+package mg.faneva.summermvc.mapping;
+
+import java.util.Objects;
+
+public class UrlMethod {
+
+    private String url;
+    private String httpMethod;
+
+    public UrlMethod(String url, String httpMethod) {
+        this.url = url;
+        this.httpMethod = httpMethod;
+    }
+
+    public String getUrl() {
+        return url;
+    }
+
+    public String getHttpMethod() {
+        return httpMethod;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+
+        if(this == obj) {
+            return true;
+        }
+
+        if(obj == null || getClass() != obj.getClass()) {
+            return false;
+        }
+
+        UrlMethod other = (UrlMethod) obj;
+
+        return url.equals(other.url)
+            && httpMethod.equals(other.httpMethod);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(url, httpMethod);
+    }
+}
+3. Mapping.java
+package mg.faneva.summermvc.mapping;
+
+public class Mapping {
+
+    private String className;
+    private String methodName;
+
+    public Mapping() {
+    }
+
+    public Mapping(String className, String methodName) {
+        this.className = className;
+        this.methodName = methodName;
+    }
+
+    public String getClassName() {
+        return className;
+    }
+
+    public String getMethodName() {
+        return methodName;
+    }
+
+    public void setClassName(String className) {
+        this.className = className;
+    }
+
+    public void setMethodName(String methodName) {
+        this.methodName = methodName;
+    }
+}
+4. FrontControllerServlet.java
+
+Les parties importantes uniquement.
+
+Attribut
+private HashMap<UrlMethod, Mapping> routes = new HashMap<>();
+Dans init()
+listController = scanControllers(basePackage);
+
+for(String controller : listController) {
+    scanMethods(controller);
+}
+scanMethods()
+private void scanMethods(String className) throws Exception {
+
+    Class<?> clazz = Class.forName(className);
+
+    java.lang.reflect.Method[] methods =
+            clazz.getDeclaredMethods();
+
+    for(java.lang.reflect.Method method : methods) {
+
+        if(method.isAnnotationPresent(
+                mg.faneva.summermvc.annotation.RequestMapping.class)) {
+
+            mg.faneva.summermvc.annotation.RequestMapping annotation =
+                    method.getAnnotation(
+                            mg.faneva.summermvc.annotation.RequestMapping.class);
+
+            String url = annotation.value();
+
+            String httpMethod = annotation.method();
+
+            UrlMethod key =
+                    new UrlMethod(url, httpMethod);
+
+            if(routes.containsKey(key)) {
+                throw new Exception(
+                        "Route déjà utilisée : "
+                        + httpMethod + " " + url
+                );
+            }
+
+            Mapping mapping =
+                    new Mapping(
+                            className,
+                            method.getName()
+                    );
+
+            routes.put(key, mapping);
+        }
+    }
+}
+processRequest()
+String uri = request.getRequestURI();
+
+String contextPath = request.getContextPath();
+
+String url = uri.substring(contextPath.length());
+
+if(url.startsWith("/")) {
+    url = url.substring(1);
+}
+
+String httpMethod = request.getMethod();
+
+UrlMethod key =
+        new UrlMethod("/" + url, httpMethod);
+Recherche
+if(routes.containsKey(key)) {
+
+    Mapping mapping = routes.get(key);
+
+    executeMethod(mapping);
+
+} else {
+
+    out.println("<h2>Route inconnue</h2>");
+
+    for(UrlMethod route : routes.keySet()) {
+
+        out.println(
+                route.getHttpMethod()
+                + " "
+                + route.getUrl()
+                + "<br>"
+        );
+    }
+}
+5. Exécution réelle (Sprint 3b)
+
+Ajouter dans FrontControllerServlet :
+
+private void executeMethod(Mapping mapping)
+        throws Exception {
+
+    Class<?> clazz =
+            Class.forName(mapping.getClassName());
+
+    Object controller =
+            clazz.getDeclaredConstructor()
+                    .newInstance();
+
+    java.lang.reflect.Method method =
+            clazz.getDeclaredMethod(
+                    mapping.getMethodName()
+            );
+
+    method.invoke(controller);
+}
+6. Contrôleur de test
+package mg.faneva.test.controller;
+
+import mg.faneva.summermvc.annotation.Controller;
+import mg.faneva.summermvc.annotation.RequestMapping;
+
+@Controller
+public class TestController {
+
+    @RequestMapping(
+        value="/test",
+        method="GET"
+    )
+    public void afficher() {
+
+        System.out.println(
+                "GET exécuté"
+        );
+    }
+
+    @RequestMapping(
+        value="/test",
+        method="POST"
+    )
+    public void sauvegarder() {
+
+        System.out.println(
+                "POST exécuté"
+        );
+    }
+}
+Résultat attendu
+
+Quand tu ouvres :
+
+http://localhost:8080/summerMVC-test/test
+
+La console Tomcat affiche :
+
+GET exécuté
+
+Si un formulaire fait :
+
+<form action="test" method="post">
+    <button type="submit">Envoyer</button>
+</form>
+
+Alors la console affiche :
+
+POST exécuté

@@ -11,11 +11,12 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import mg.faneva.summermvc.mapping.MappingInfo;
+import mg.faneva.summermvc.mapping.Mapping;
+import mg.faneva.summermvc.mapping.UrlMethod;
 
 public class FrontControllerServlet extends HttpServlet{
     private List<String> listController = new ArrayList<>();
-    private HashMap<String , MappingInfo> routes;
+    private HashMap<UrlMethod, Mapping> routes;
 
     @Override
     public void init() throws ServletException{
@@ -33,50 +34,77 @@ public class FrontControllerServlet extends HttpServlet{
         }
     }
     
+    private void executeMethod(Mapping mapping)
+            throws Exception {
+
+        Class<?> clazz =
+                Class.forName(
+                    mapping.getClassName()
+                );
+
+        Object controller =
+                clazz.getDeclaredConstructor()
+                    .newInstance();
+
+        java.lang.reflect.Method method =
+                clazz.getDeclaredMethod(
+                    mapping.getMethodName()
+                );
+
+        method.invoke(controller);
+    }
+
+
     protected void processRequest(
         HttpServletRequest request, HttpServletResponse response
     ) throws ServletException , IOException {
         response.setContentType("text/html;charset=UTF-8");
+        PrintWriter out = response.getWriter();
         String uri = request.getRequestURI();
-        String contextPath = request.getContextPath();
-        String url = uri.substring(contextPath.length());
-        if (url.startsWith("/")) {
-            url.substring(1);
+        String context = request.getContextPath();
+
+        String url = uri.substring(context.length());
+
+        if(url.startsWith("/")){
+            url = url.substring(1);
         }
-        
-        
-        
-        try(PrintWriter out = response.getWriter()){
-            out.println("<!DOCTYPE html>");
-            out.println("<html lang=\"en\">");
-            out.println("<head>");
-            out.println("<title>SummerMVC</title>");
-            out.println("</head>");
-            out.println("<body>");
-            out.println("<h1>SummerMVC ok!</h1>");
-            if (routes.containsKey(url)) {
-                MappingInfo mapping = routes.get(url);
-                out.println("<h2>URL reconnue</h2>");
-                out.println("<p>URL : " + url + "</p>");
-                out.println("<p>Classe : " + mapping.getClassName() + "</p>");
-                out.println("<p>Méthode : " + mapping.getMethodName() + "</p>");
-            } else {
-                out.println("<h2>URL inconnue : " + url + "</h2>");
 
-                out.println("<h3>Les URL connues :</h3>");
+        String httpMethod = request.getMethod();
 
-                out.println("<ul>");
+        UrlMethod key =
+                new UrlMethod(
+                    url,
+                    httpMethod
+                );
 
-                for(String key : routes.keySet()){
-                    out.println("<li>" + key + "</li>");
-                }
+        if(routes.containsKey(key)){
 
-                out.println("</ul>");
+            Mapping mapping = routes.get(key);
+
+            try {
+                executeMethod(mapping);
+            } catch (Exception e) {
+                throw new ServletException(e);
             }
-            out.println("</body>");
-            out.println("</html>");
+
+            out.println("Route trouvee");
+
+            out.println("<br>");
+
+            out.println(mapping.getClassName());
+
+            out.println("<br>");
+
+            out.println(mapping.getMethodName());
+
+        }
+        else{
+
+            out.println("Route inconnue");
         }
     }
+
+
     @Override
     protected void doGet(
         HttpServletRequest request, HttpServletResponse response
@@ -126,25 +154,45 @@ public class FrontControllerServlet extends HttpServlet{
         return controllers;
     }
 
-    private void scanMethods(String className) throws Exception{
+    private void scanMethods(String className) throws Exception {
+
         Class<?> clazz = Class.forName(className);
-        java.lang.reflect.Method[] methodes = clazz.getDeclaredMethods();
 
-        for (java.lang.reflect.Method method : methodes) {
-            
-            if (method.isAnnotationPresent(mg.faneva.summermvc.annotation.Mapping.class)) {
-                mg.faneva.summermvc.annotation.Mapping annotation = method.getAnnotation(mg.faneva.summermvc.annotation.Mapping.class);
-                String url = annotation.value();
+        java.lang.reflect.Method[] methods =
+                clazz.getDeclaredMethods();
 
-                if (routes.containsKey(url)) {
-                    throw new Exception("URL déjà utilisé!" + url);
+        for(java.lang.reflect.Method method : methods){
+
+            if(method.isAnnotationPresent(
+                    mg.faneva.summermvc.annotation.RequestMapping.class)){
+
+                mg.faneva.summermvc.annotation.RequestMapping rm =
+                        method.getAnnotation(
+                            mg.faneva.summermvc.annotation.RequestMapping.class);
+
+                String url = rm.value();
+
+                String httpMethod = rm.method();
+
+                UrlMethod key =
+                        new UrlMethod(url, httpMethod);
+
+                if(routes.containsKey(key)){
+                    throw new Exception(
+                        "Route deja utilisee : "
+                        + httpMethod
+                        + " "
+                        + url
+                    );
                 }
-                MappingInfo mapping = new MappingInfo(
-                    className,
-                    method.getName()
-                );
 
-                routes.put(url, mapping);
+                Mapping mapping =
+                        new Mapping(
+                            className,
+                            method.getName()
+                        );
+
+                routes.put(key, mapping);
             }
         }
     }
