@@ -3,7 +3,10 @@ package mg.faneva.summermvc.scanner;
 import java.io.File;
 import java.lang.reflect.Method;
 import java.net.URL;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.List;
 
 import mg.faneva.summermvc.annotation.Controller;
 import mg.faneva.summermvc.annotation.RequestMapping;
@@ -12,107 +15,136 @@ import mg.faneva.summermvc.mapping.UrlMethod;
 
 public class ControllerScanner {
 
-    public List<String> scanControllers(String basePackage)
+
+    public List<Class<?>> scanControllers(String basePackage)
             throws Exception {
 
-        List<String> controllers = new ArrayList<>();
+        List<Class<?>> controllers = new ArrayList<>();
 
         String path = basePackage.replace(".", "/");
 
-        ClassLoader cl =
-                Thread.currentThread().getContextClassLoader();
+        ClassLoader classLoader =
+                Thread.currentThread()
+                .getContextClassLoader();
+
 
         Enumeration<URL> resources =
-                cl.getResources(path);
+                classLoader.getResources(path);
 
-        while (resources.hasMoreElements()) {
 
-            URL resource = resources.nextElement();
+        while(resources.hasMoreElements()){
 
-            File dir = new File(resource.toURI());
+            URL resource =
+                    resources.nextElement();
 
-            String[] files = dir.list();
+
+            File directory =
+                    new File(resource.toURI());
+
+
+            File[] files =
+                    directory.listFiles();
+
 
             if(files == null)
                 continue;
 
-            for(String file : files){
 
-                if(file.endsWith(".class")){
+            for(File file : files){
+
+                if(file.getName().endsWith(".class")){
+
 
                     String className =
-                            basePackage + "."
-                            + file.replace(".class","");
+                            basePackage
+                            + "."
+                            + file.getName()
+                            .replace(".class","");
+
 
                     Class<?> clazz =
                             Class.forName(className);
 
+
                     if(clazz.isAnnotationPresent(
                             Controller.class)){
 
-                        controllers.add(className);
-
+                        controllers.add(clazz);
                     }
-
                 }
-
             }
-
         }
 
-        return controllers;
 
+        return controllers;
     }
 
+
+
     public HashMap<UrlMethod, Mapping> scanMethods(
-            List<String> controllers)
+            List<Class<?>> controllers)
             throws Exception {
+
 
         HashMap<UrlMethod, Mapping> routes =
                 new HashMap<>();
 
-        for(String className : controllers){
 
-            Class<?> clazz =
-                    Class.forName(className);
+        for(Class<?> clazz : controllers){
+
 
             Method[] methods =
                     clazz.getDeclaredMethods();
 
+
+
             for(Method method : methods){
+
 
                 if(method.isAnnotationPresent(
                         RequestMapping.class)){
+
 
                     RequestMapping rm =
                             method.getAnnotation(
                                     RequestMapping.class);
 
+
+
                     UrlMethod key =
                             new UrlMethod(
                                     rm.value(),
-                                    rm.method());
+                                    rm.method()
+                            );
 
-                    if(routes.containsKey(key))
+
+
+                    if(routes.containsKey(key)){
+
                         throw new Exception(
-                                "Route déjà utilisée");
+                                "Route déjà utilisée : "
+                                + rm.value()
+                        );
+
+                    }
+
+
 
                     routes.put(
                             key,
                             new Mapping(
-                                    className,
-                                    method.getName()
+                                    clazz,
+                                    method
                             )
                     );
-
                 }
 
             }
 
         }
 
-        return routes;
 
+        return routes;
     }
 
 }

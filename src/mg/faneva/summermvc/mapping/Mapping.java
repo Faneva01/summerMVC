@@ -1,23 +1,33 @@
 package mg.faneva.summermvc.mapping;
 
+import java.lang.reflect.Method;
+
 public class Mapping {
 
-    private String className;
-    private String methodName;
+    private Class<?> controller;
 
-    public Mapping() {
+    private Method method;
+
+    public Mapping() {}
+
+    public Mapping(Class<?> controller, Method method) {
+        this.controller = controller;
+        this.method = method;
     }
 
-    public Mapping(String className, String methodName) {
-        this.className = className;
-        this.methodName = methodName;
+    public Class<?> getController() {
+        return controller;
     }
 
-    public String getClassName() {
-        return className;
+    public void setController(Class<?> controller) {
+        this.controller = controller;
     }
 
-    public String getMethodName() {
-        return methodName;
+    public Method getMethod() {
+        return method;
+    }
+
+    public void setMethod(Method method) {
+        this.method = method;
     }
 }
