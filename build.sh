@@ -10,7 +10,7 @@ JAR_DIR="$BUILD_DIR/jar"
 SERVLET_API="lib/servlet-api.jar"
 
 # Nouvelle variable pour la destination finale
-DEST_DIR="/home/faneva/L2/S4/Web_dynamique/framework/test_summerMVC/lib"
+DEST_DIR="/home/faneva/L2/S4/Web_dynamique/framework/summerMVC/test_summerMVC/lib"
 
 echo "Nettoyage..."
 rm -rf "$BUILD_DIR"
