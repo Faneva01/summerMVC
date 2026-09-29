@@ -10,7 +10,7 @@ JAR_DIR="$BUILD_DIR/jar"
 LIB_DIR="lib"
 
 
-DEST_DIR="/home/faneva/L2/S4/Web_dynamique/framework/summerMVC/test_summerMVC/lib"
+DEST_DIR="/home/faneva/L2/S4/Web_dynamique/framework/test_summerMVC/lib"
 
 
 echo "Nettoyage..."

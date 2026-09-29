@@ -8,26 +8,27 @@ public class Mapping {
 
     private Method method;
 
-    public Mapping() {}
+    private boolean json;
 
-    public Mapping(Class<?> controller, Method method) {
+    public Mapping(
+            Class<?> controller,
+            Method method,
+            boolean json) {
+
         this.controller = controller;
         this.method = method;
+        this.json = json;
     }
 
     public Class<?> getController() {
         return controller;
     }
 
-    public void setController(Class<?> controller) {
-        this.controller = controller;
-    }
-
     public Method getMethod() {
         return method;
     }
 
-    public void setMethod(Method method) {
-        this.method = method;
+    public boolean isJson() {
+        return json;
     }
 }
