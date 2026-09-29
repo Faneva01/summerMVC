@@ -1,0 +1,15 @@
+Sprint 6:
+WEB ( REST API ):
+- TSY MANDEHA ANY AM VUE LE URL ASSOCIÉ REFA ANTSOINA FA MAMERINA JSON
+- (Tsy manao request dispatcher zany fa tode mamerina json za )
+
+Solution:
+- Mampiasa annotation vaovao (Json , na aPI rest ohatra ): Niveau method
+- Refa tonga any am front servlet: Mitest ny existence anio annotation io
+-- Raha misy dia mila mamerina Json , ra tsy misy dia otrany teo aloha manao dispatcher (PrintWrinter)
+
+
+Mety ho sprint7:
+- Upload fichier
+Manaraka:
+- Gestion ana session

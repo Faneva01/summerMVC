@@ -32,16 +32,22 @@ public class FrontControllerServlet extends HttpServlet {
 
 
         if(routes == null){
+
             throw new ServletException(
                 "Routes non initialisées"
             );
+
         }
 
     }
 
 
 
-    private void executeMethod(
+    /**
+     * Exécute la méthode du Controller
+     * et retourne son résultat.
+     */
+    private Object executeMethod(
             Mapping mapping)
             throws Exception {
 
@@ -58,7 +64,7 @@ public class FrontControllerServlet extends HttpServlet {
 
 
         /*
-         * Récupération du contrôleur
+         * Récupération du Controller
          */
         Object controller =
                 beans.get(
@@ -80,9 +86,23 @@ public class FrontControllerServlet extends HttpServlet {
 
         /*
          * Invocation de la méthode
+         *
+         * Avant Sprint 6 :
+         *
+         * mapping.getMethod().invoke(controller);
+         *
+         * Le résultat était perdu.
+         *
+         * Maintenant :
+         * on récupère le résultat.
          */
-        mapping.getMethod()
-               .invoke(controller);
+        Object result =
+                mapping.getMethod()
+                       .invoke(controller);
+
+
+
+        return result;
 
     }
 
@@ -95,16 +115,6 @@ public class FrontControllerServlet extends HttpServlet {
             HttpServletResponse response
     )
             throws ServletException, IOException {
-
-
-        response.setContentType(
-            "text/html;charset=UTF-8"
-        );
-
-
-        PrintWriter out =
-                response.getWriter();
-
 
 
         String uri =
@@ -154,40 +164,114 @@ public class FrontControllerServlet extends HttpServlet {
 
             try {
 
-                executeMethod(mapping);
+                /*
+                 * Exécution du Controller
+                 */
+                Object result =
+                        executeMethod(mapping);
 
 
-            } catch(Exception e){
+
+                /*
+                 * SPRINT 6
+                 *
+                 * Si la méthode possède
+                 * l'annotation @Json,
+                 * on retourne directement
+                 * le résultat sous forme JSON.
+                 */
+                if(mapping.isJson()){
+
+
+                    response.setContentType(
+                        "application/json;charset=UTF-8"
+                    );
+
+
+                    PrintWriter out =
+                            response.getWriter();
+
+
+
+                    /*
+                     * Pour l'instant,
+                     * on transforme simplement
+                     * le résultat en String.
+                     *
+                     * Cette partie sera remplacée
+                     * par Jackson pour produire
+                     * un vrai JSON.
+                     */
+                    out.println(
+                        result
+                    );
+
+
+
+                    return;
+
+                }
+
+
+
+                /*
+                 * Sinon :
+                 *
+                 * comportement MVC classique
+                 * du Sprint 5 bis.
+                 *
+                 * Ici on récupérera le ModelView
+                 * et on fera le RequestDispatcher.
+                 */
+                response.setContentType(
+                    "text/html;charset=UTF-8"
+                );
+
+
+                PrintWriter out =
+                        response.getWriter();
+
+
+
+                out.println(
+                    "Route trouvee"
+                );
+
+
+                out.println("<br>");
+
+
+                out.println(
+                    mapping.getController()
+                );
+
+
+                out.println("<br>");
+
+
+                out.println(
+                    mapping.getMethod().getName()
+                );
+
+
+            }
+            catch(Exception e){
 
                 throw new ServletException(e);
 
             }
 
-
-
-            out.println(
-                "Route trouvee"
-            );
-
-
-            out.println("<br>");
-
-
-            out.println(
-                mapping.getController()
-            );
-
-
-            out.println("<br>");
-
-
-            out.println(
-                mapping.getMethod().getName()
-            );
-
-
         }
         else{
+
+
+            response.setContentType(
+                "text/html;charset=UTF-8"
+            );
+
+
+            PrintWriter out =
+                    response.getWriter();
 
 
             out.println(
@@ -226,7 +310,6 @@ public class FrontControllerServlet extends HttpServlet {
             HttpServletResponse response
     )
             throws ServletException, IOException {
-
 
         processRequest(
             request,
