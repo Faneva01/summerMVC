@@ -9,6 +9,7 @@ Solution:
 -- Raha misy dia mila mamerina Json , ra tsy misy dia otrany teo aloha manao dispatcher (PrintWrinter)
 
 
+
 Mety ho sprint7:
 - Upload fichier
 Manaraka:
