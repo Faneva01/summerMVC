@@ -7,7 +7,7 @@ import java.lang.reflect.Parameter;
 import java.lang.reflect.InvocationTargetException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.util.Date;
+import java.util.Map;
 
 public class DataBinder {
 
@@ -45,7 +45,7 @@ public class DataBinder {
 
             // Cas 2 : objet Java
             else {
-                arguments[i] = bindObject(request, type);
+                arguments[i] = bindObject(request, type, "");
             }
         }
 
@@ -181,12 +181,20 @@ public class DataBinder {
      */
     private Object bindObject(
             HttpServletRequest request,
-            Class<?> type) throws Exception {
+            Class<?> type,
+            String prefix) throws Exception {
 
         Object object;
 
         try {
             object = type.getDeclaredConstructor().newInstance();
+        } catch (NoSuchMethodException | IllegalAccessException
+                | InstantiationException e) {
+            throw new IllegalArgumentException(
+                "L'objet " + type.getName()
+                + " doit avoir un constructeur sans argument accessible",
+                e
+            );
         } catch (InvocationTargetException e) {
             throw new IllegalArgumentException(
                 "Impossible de construire l'objet "
@@ -209,34 +217,78 @@ public class DataBinder {
                     setter.getName().charAt(3))
                     + setter.getName().substring(4);
 
-            String value = request.getParameter(property);
+            String propertyPath = prefix.isEmpty()
+                    ? property
+                    : prefix + "." + property;
+            String value = request.getParameter(propertyPath);
 
             // Si le champ n'a pas été envoyé,
             // on conserve la valeur par défaut.
-            if (value == null) {
-                continue;
-            }
-
             Class<?> propertyType =
                     setter.getParameterTypes()[0];
 
-            if (!isSimpleType(propertyType)) {
+            if (isSimpleType(propertyType)) {
+                // Un champ absent conserve la valeur par défaut du modèle.
+                if (value == null) {
+                    continue;
+                }
+
+                Object convertedValue;
+                try {
+                    convertedValue = convert(value, propertyType);
+                } catch (RuntimeException e) {
+                    throw new IllegalArgumentException(
+                        "Valeur invalide pour la propriété '"
+                        + propertyPath + "' : " + value,
+                        e
+                    );
+                }
+
+                try {
+                    setter.invoke(object, convertedValue);
+                } catch (InvocationTargetException e) {
+                    throw new IllegalArgumentException(
+                        "Erreur lors du remplissage de la propriété : "
+                        + propertyPath,
+                        e.getCause()
+                    );
+                }
                 continue;
             }
 
-            Object convertedValue = convert(value, propertyType);
-
-            try {
-                setter.invoke(object, convertedValue);
-            } catch (InvocationTargetException e) {
-                throw new IllegalArgumentException(
-                    "Erreur lors du remplissage de la propriété : "
-                    + property,
-                    e.getCause()
+            // Un objet imbriqué reste null si aucun de ses champs n'est
+            // présent. Les préfixes pointés permettent plusieurs niveaux.
+            if (hasNestedParameters(request, propertyPath)) {
+                Object nestedObject = bindObject(
+                        request,
+                        propertyType,
+                        propertyPath
                 );
+                try {
+                    setter.invoke(object, nestedObject);
+                } catch (InvocationTargetException e) {
+                    throw new IllegalArgumentException(
+                        "Erreur lors du remplissage de la propriété : "
+                        + propertyPath,
+                        e.getCause()
+                    );
+                }
             }
         }
 
         return object;
+    }
+
+    private boolean hasNestedParameters(
+            HttpServletRequest request,
+            String prefix) {
+        String nestedPrefix = prefix + ".";
+        for (Map.Entry<String, String[]> parameter
+                : request.getParameterMap().entrySet()) {
+            if (parameter.getKey().startsWith(nestedPrefix)) {
+                return true;
+            }
+        }
+        return false;
     }
 }
