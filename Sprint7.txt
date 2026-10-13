@@ -1,0 +1,6 @@
+Sprint7:
+- Bending: Données avany am vue mankao am controller.
+Iny method save iny mila mpper na. 
+Refa mi clic anle boutton de mankao am frontControllerServelt: Verifier ny lay methode de ampiny aveo hoe misy paramètre ve...
+Mandray paramètre (emp) ohatra.
+(Objet après)

@@ -1,80 +1,25 @@
-#!/bin/bash
+#!/bin/sh
+set -eu
 
-PROJECT_NAME="summermvc"
-
-SRC_DIR="src"
-BUILD_DIR="build"
+ROOT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+SRC_DIR="$ROOT_DIR/src"
+LIB_DIR="$ROOT_DIR/lib"
+BUILD_DIR=${SUMMERMVC_BUILD_DIR:-"$ROOT_DIR/target/framework"}
 CLASS_DIR="$BUILD_DIR/classes"
 JAR_DIR="$BUILD_DIR/jar"
+DEST_DIR=${SUMMERMVC_LIB_DIR:-"$ROOT_DIR/test_summerMVC/lib"}
 
-LIB_DIR="lib"
-
-
-DEST_DIR="/home/faneva/L2/S4/Web_dynamique/framework/test_summerMVC/lib"
-
-
-echo "Nettoyage..."
+echo "Nettoyage du build summerMVC..."
 rm -rf "$BUILD_DIR"
+mkdir -p "$CLASS_DIR" "$JAR_DIR" "$DEST_DIR"
 
-
-mkdir -p "$CLASS_DIR"
-mkdir -p "$JAR_DIR"
-
-
-echo "Compilation..."
-
-
-javac \
-    -cp "$LIB_DIR/*" \
-    -d "$CLASS_DIR" \
-    $(find "$SRC_DIR" -name "*.java")
-
-
-
-if [ $? -ne 0 ]; then
-
-    echo "Erreur de compilation"
-    exit 1
-
-fi
-
-
+echo "Compilation du framework..."
+find "$SRC_DIR" -name '*.java' -print > "$BUILD_DIR/sources.list"
+javac -cp "$LIB_DIR/*" -d "$CLASS_DIR" @"$BUILD_DIR/sources.list"
 
 echo "Création du JAR..."
+jar cf "$JAR_DIR/summermvc.jar" -C "$CLASS_DIR" .
+cp -f "$JAR_DIR/summermvc.jar" "$DEST_DIR/summermvc.jar"
 
-
-jar cf \
-    "$JAR_DIR/$PROJECT_NAME.jar" \
-    -C "$CLASS_DIR" .
-
-
-
-echo "Déploiement du JAR..."
-
-
-mkdir -p "$DEST_DIR"
-
-
-cp -f \
-"$JAR_DIR/$PROJECT_NAME.jar" \
-"$DEST_DIR/"
-
-
-
-if [ $? -eq 0 ]; then
-
-    echo "JAR copié avec succès dans : $DEST_DIR"
-
-else
-
-    echo "Erreur lors de la copie du JAR"
-    exit 1
-
-fi
-
-
-
-echo ""
-echo "Terminé."
-echo "JAR généré et déployé :"
-echo "$DEST_DIR/$PROJECT_NAME.jar"
+echo "JAR créé : $JAR_DIR/summermvc.jar"
+echo "JAR copié : $DEST_DIR/summermvc.jar"

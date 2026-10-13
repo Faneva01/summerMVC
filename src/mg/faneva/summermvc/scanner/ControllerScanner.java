@@ -19,6 +19,13 @@ public class ControllerScanner {
     public List<Class<?>> scanControllers(String basePackage)
             throws Exception {
 
+        if (basePackage == null || basePackage.trim().isEmpty()) {
+            throw new Exception(
+                "Init-param 'base-package' manquant dans web.xml. "
+                + "Ajoutez : <context-param><param-name>base-package</param-name>"
+                + "<param-value>mg.faneva.test.controller</param-value></context-param>");
+        }
+
         List<Class<?>> controllers = new ArrayList<>();
 
         String path =
@@ -39,38 +46,51 @@ public class ControllerScanner {
             File directory =
                     new File(resource.toURI());
 
-            File[] files =
-                    directory.listFiles();
-
-            if(files == null)
-                continue;
-
-            for(File file : files){
-
-                if(file.getName().endsWith(".class")){
-
-                    String className =
-                            basePackage
-                            + "."
-                            + file.getName()
-                            .replace(".class", "");
-
-                    Class<?> clazz =
-                            Class.forName(className);
-
-                    if(clazz.isAnnotationPresent(
-                            Controller.class)){
-
-                        controllers.add(clazz);
-                    }
-                }
-            }
+            scanDirectory(directory, basePackage, controllers);
         }
 
         return controllers;
     }
 
 
+    private void scanDirectory(
+            File directory,
+            String packageName,
+            List<Class<?>> controllers)
+            throws ClassNotFoundException {
+
+        File[] files = directory.listFiles();
+
+        if (files == null)
+            return;
+
+        for (File file : files) {
+
+            if (file.isDirectory()) {
+                scanDirectory(
+                    file,
+                    packageName + "." + file.getName(),
+                    controllers);
+            }
+            else if (file.getName().endsWith(".class")) {
+
+                String className =
+                        packageName
+                        + "."
+                        + file.getName()
+                        .replace(".class", "");
+
+                Class<?> clazz =
+                        Class.forName(className);
+
+                if (clazz.isAnnotationPresent(
+                        Controller.class)) {
+
+                    controllers.add(clazz);
+                }
+            }
+        }
+    }
 
     public HashMap<UrlMethod, Mapping> scanMethods(
             List<Class<?>> controllers)

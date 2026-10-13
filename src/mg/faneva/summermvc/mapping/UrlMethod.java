@@ -1,6 +1,7 @@
 package mg.faneva.summermvc.mapping;
 
 import java.util.Objects;
+import java.util.Locale;
 
 public class UrlMethod {
 
@@ -8,8 +9,25 @@ public class UrlMethod {
     private String method;
 
     public UrlMethod(String url, String method) {
-        this.url = url;
-        this.method = method;
+        this.url = normalizeUrl(url);
+        this.method = method == null
+                ? "GET"
+                : method.trim().toUpperCase(Locale.ROOT);
+    }
+
+    private static String normalizeUrl(String url) {
+        if (url == null) {
+            return "";
+        }
+
+        String normalized = url.trim();
+        while (normalized.startsWith("/")) {
+            normalized = normalized.substring(1);
+        }
+        while (normalized.endsWith("/") && !normalized.isEmpty()) {
+            normalized = normalized.substring(0, normalized.length() - 1);
+        }
+        return normalized;
     }
 
     public String getUrl() {
