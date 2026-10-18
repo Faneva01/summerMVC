@@ -7,7 +7,13 @@ import java.lang.reflect.Parameter;
 import java.lang.reflect.InvocationTargetException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.Map;
+
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.Part;
 
 public class DataBinder {
 
@@ -45,7 +51,18 @@ public class DataBinder {
 
             // Cas 2 : objet Java
             else {
-                arguments[i] = bindObject(request, type, "");
+                if (isUploadedFileType(type)) {
+                    if (!parameter.isNamePresent()) {
+                        throw new IllegalArgumentException(
+                            "Nom du paramètre Java indisponible pour le fichier. "
+                            + "Compilez avec l'option -parameters."
+                        );
+                    }
+                    arguments[i] = bindUploadedFile(
+                            request, type, parameter.getName());
+                } else {
+                    arguments[i] = bindObject(request, type, "");
+                }
             }
         }
 
@@ -256,6 +273,21 @@ public class DataBinder {
                 continue;
             }
 
+            if (isUploadedFileType(propertyType)) {
+                Object uploadedFile = bindUploadedFile(
+                        request, propertyType, propertyPath);
+                try {
+                    setter.invoke(object, uploadedFile);
+                } catch (InvocationTargetException e) {
+                    throw new IllegalArgumentException(
+                        "Erreur lors du remplissage de la propriété : "
+                        + propertyPath,
+                        e.getCause()
+                    );
+                }
+                continue;
+            }
+
             // Un objet imbriqué reste null si aucun de ses champs n'est
             // présent. Les préfixes pointés permettent plusieurs niveaux.
             if (hasNestedParameters(request, propertyPath)) {
@@ -274,6 +306,98 @@ public class DataBinder {
                     );
                 }
             }
+        }
+
+        return object;
+    }
+
+    /**
+     * Reconnaît un DTO de fichier par ses trois propriétés conventionnelles.
+     */
+    private boolean isUploadedFileType(Class<?> type) {
+        try {
+            return type.getMethod("setNom", String.class).getReturnType() == void.class
+                    && type.getMethod("setExtension", String.class).getReturnType() == void.class
+                    && type.getMethod("setContenu", byte[].class).getReturnType() == void.class;
+        } catch (NoSuchMethodException e) {
+            return false;
+        }
+    }
+
+    private Object bindUploadedFile(
+            HttpServletRequest request,
+            Class<?> type,
+            String partName) throws Exception {
+        Object object;
+        try {
+            object = type.getDeclaredConstructor().newInstance();
+        } catch (NoSuchMethodException | IllegalAccessException
+                | InstantiationException e) {
+            throw new IllegalArgumentException(
+                "Le DTO de fichier " + type.getName()
+                + " doit avoir un constructeur sans argument accessible",
+                e
+            );
+        } catch (InvocationTargetException e) {
+            throw new IllegalArgumentException(
+                "Impossible de construire le DTO de fichier " + type.getName(),
+                e.getCause()
+            );
+        }
+
+        Part part;
+        try {
+            part = request.getPart(partName);
+        } catch (IllegalStateException | ServletException | IOException e) {
+            throw new IllegalArgumentException(
+                "Impossible de lire le fichier '" + partName
+                + "'. Vérifiez que le formulaire utilise multipart/form-data "
+                + "et que le servlet accepte les requêtes multipart.",
+                e
+            );
+        }
+
+        if (part == null || part.getSubmittedFileName() == null
+                || part.getSubmittedFileName().isEmpty()) {
+            return object;
+        }
+
+        String submittedName = part.getSubmittedFileName();
+        // Certains navigateurs anciens transmettent encore un chemin local.
+        int separator = Math.max(submittedName.lastIndexOf('/'),
+                submittedName.lastIndexOf('\\'));
+        String fileName = submittedName.substring(separator + 1);
+        int dot = fileName.lastIndexOf('.');
+        String name = dot > 0 ? fileName.substring(0, dot) : fileName;
+        String extension = dot > 0 && dot < fileName.length() - 1
+                ? fileName.substring(dot + 1)
+                : "";
+
+        byte[] content;
+        try (InputStream input = part.getInputStream();
+                ByteArrayOutputStream output = new ByteArrayOutputStream()) {
+            byte[] buffer = new byte[8192];
+            int read;
+            while ((read = input.read(buffer)) != -1) {
+                output.write(buffer, 0, read);
+            }
+            content = output.toByteArray();
+        } catch (IOException e) {
+            throw new IllegalArgumentException(
+                "Impossible de lire le contenu du fichier '" + fileName + "'",
+                e
+            );
+        }
+
+        try {
+            type.getMethod("setNom", String.class).invoke(object, name);
+            type.getMethod("setExtension", String.class).invoke(object, extension);
+            type.getMethod("setContenu", byte[].class).invoke(object, content);
+        } catch (InvocationTargetException e) {
+            throw new IllegalArgumentException(
+                "Erreur lors du remplissage du DTO de fichier " + type.getName(),
+                e.getCause()
+            );
         }
 
         return object;
