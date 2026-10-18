@@ -6,4 +6,5 @@ Manana objet (class) antsika manokana hi stocker na anle fichier:
 class Type : - Nom
              - Extension (docx, mp3,mp4 ,...)
              - Tableau ana bytes ( ilay fichier en question mila ovaina type bytes)
-Refa azo io dia mila buindé ... !!!
+Refa azo io dia mila bindé ... !!!
+Tsy hatao en dur lay chemin ana repertoire

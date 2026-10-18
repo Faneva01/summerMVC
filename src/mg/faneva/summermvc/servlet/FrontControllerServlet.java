@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import jakarta.servlet.ServletException;
+import jakarta.servlet.annotation.MultipartConfig;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -17,6 +18,7 @@ import java.lang.reflect.Method;
 import mg.faneva.summermvc.binding.DataBinder;
 import mg.faneva.summermvc.modelview.ModelView;
 
+@MultipartConfig
 public class FrontControllerServlet extends HttpServlet {
 
 
