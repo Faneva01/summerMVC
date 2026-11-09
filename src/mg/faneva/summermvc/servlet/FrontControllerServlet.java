@@ -117,6 +117,47 @@ public class FrontControllerServlet extends HttpServlet {
                 && httpSession.getAttribute(authVariable) != null;
     }
 
+    /*
+     * SPRINT 10 BIS
+     *
+     * Le rôle de l'utilisateur est lu dans la variable de session
+     * configurée dans web.xml (role-variable), puis comparé
+     * aux rôles de l'annotation @Auth.
+     */
+    private boolean hasRole(
+            HttpServletRequest request,
+            String[] roles) {
+
+        String roleVariable =
+                (String) getServletContext().getAttribute("roleVariable");
+
+        if (roleVariable == null || roleVariable.isEmpty()) {
+            return false;
+        }
+
+        HttpSession httpSession = request.getSession(false);
+
+        if (httpSession == null) {
+            return false;
+        }
+
+        // La variable de rôle doit exister dans la session
+        Object userRole = httpSession.getAttribute(roleVariable);
+
+        if (userRole == null) {
+            return false;
+        }
+
+        // Un seul des rôles de l'annotation suffit
+        for (String role : roles) {
+            if (role.equals(userRole.toString())) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
 
 
 
@@ -181,6 +222,36 @@ public class FrontControllerServlet extends HttpServlet {
 
                     out.println(
                         "Authentification requise"
+                    );
+
+                    return;
+
+                }
+
+                /*
+                 * SPRINT 10 BIS
+                 *
+                 * Si @Auth précise des rôles,
+                 * la méthode n'est invoquée que
+                 * si le rôle de l'utilisateur
+                 * connecté en fait partie.
+                 */
+                if(mapping.getRoles().length > 0
+                        && !hasRole(request, mapping.getRoles())){
+
+                    response.setStatus(
+                        HttpServletResponse.SC_FORBIDDEN
+                    );
+
+                    response.setContentType(
+                        "text/html;charset=UTF-8"
+                    );
+
+                    PrintWriter out =
+                            response.getWriter();
+
+                    out.println(
+                        "Accès refusé : rôle non autorisé"
                     );
 
                     return;

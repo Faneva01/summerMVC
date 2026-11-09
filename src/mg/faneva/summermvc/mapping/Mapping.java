@@ -12,16 +12,20 @@ public class Mapping {
 
     private boolean auth;
 
+    private String[] roles;
+
     public Mapping(
             Class<?> controller,
             Method method,
             boolean json,
-            boolean auth) {
+            boolean auth,
+            String[] roles) {
 
         this.controller = controller;
         this.method = method;
         this.json = json;
         this.auth = auth;
+        this.roles = roles;
     }
 
     public Class<?> getController() {
@@ -38,5 +42,9 @@ public class Mapping {
 
     public boolean isAuth() {
         return auth;
+    }
+
+    public String[] getRoles() {
+        return roles;
     }
 }

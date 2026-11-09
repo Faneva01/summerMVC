@@ -45,6 +45,25 @@ public class FrameworkContextListener implements ServletContextListener {
                         }
                 }
 
+                // SPRINT 10 BIS
+                // Nom de la variable de session qui contient le rôle de l'utilisateur
+                String roleVariable = context.getInitParameter( "role-variable" );
+                if(roleVariable != null){
+                        roleVariable = roleVariable.trim();
+                }
+
+                // Une route @Auth(roles) sans variable configurée ne peut pas être contrôlée
+                for(Mapping mapping : routes.values()){
+                        if(mapping.getRoles().length > 0
+                                && (roleVariable == null || roleVariable.isEmpty())){
+                                throw new Exception(
+                                        "Init-param 'role-variable' manquant dans web.xml. "
+                                        + "Il est obligatoire pour la méthode @Auth(roles) : "
+                                        + mapping.getController().getName()
+                                        + "." + mapping.getMethod().getName());
+                        }
+                }
+
                 //Récupération du contexte Spring
              
                 WebApplicationContext springContext = WebApplicationContextUtils.getRequiredWebApplicationContext( context );
@@ -66,6 +85,7 @@ public class FrameworkContextListener implements ServletContextListener {
                 context.setAttribute( "routes",routes);
                 context.setAttribute( "beans", beans);
                 context.setAttribute( "authVariable", authVariable);
+                context.setAttribute( "roleVariable", roleVariable);
             
                 System.out.println("===== SummerMVC Started =====");
 
