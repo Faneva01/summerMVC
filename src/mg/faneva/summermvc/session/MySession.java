@@ -1,9 +1,7 @@
 package mg.faneva.summermvc.session;
 
-import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import jakarta.servlet.http.HttpSession;
@@ -21,8 +19,12 @@ public class MySession {
 
     private Map<String, Object> data;
 
+    // Contenu de la HttpSession au moment du chargement.
+    private Map<String, Object> loaded;
+
     public MySession() {
         data = new HashMap<>();
+        loaded = new HashMap<>();
     }
 
     public String getId() {
@@ -65,35 +67,38 @@ public class MySession {
             String name = names.nextElement();
             data.put(name, httpSession.getAttribute(name));
         }
+
+        loaded = new HashMap<>(data);
     }
 
     /*
-     * Reporte le contenu du map vers la HttpSession.
+     * Reporte vers la HttpSession les changements faits
+     * pendant la méthode d'action.
      * Appelée par le framework après la méthode d'action.
+     *
+     * Seuls les attributs retirés, ajoutés ou modifiés sont reportés :
+     * une requête simultanée de la même session ne perd pas
+     * ce qu'elle a elle-même enregistré.
      */
     public void update(HttpSession httpSession) {
 
         // Les attributs retirés du map sont retirés de la HttpSession.
-        List<String> removed = new ArrayList<>();
-
-        Enumeration<String> names =
-                httpSession.getAttributeNames();
-
-        while (names.hasMoreElements()) {
-            String name = names.nextElement();
+        for (String name : loaded.keySet()) {
             if (!data.containsKey(name)) {
-                removed.add(name);
+                httpSession.removeAttribute(name);
             }
-        }
-
-        for (String name : removed) {
-            httpSession.removeAttribute(name);
         }
 
         // Les attributs ajoutés ou modifiés sont recopiés.
         for (Map.Entry<String, Object> entry : data.entrySet()) {
-            httpSession.setAttribute(entry.getKey(), entry.getValue());
+            String name = entry.getKey();
+            Object value = entry.getValue();
+            if (!loaded.containsKey(name) || loaded.get(name) != value) {
+                httpSession.setAttribute(name, value);
+            }
         }
+
+        loaded = new HashMap<>(data);
     }
 
 }
