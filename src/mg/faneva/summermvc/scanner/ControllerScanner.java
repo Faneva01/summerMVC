@@ -8,6 +8,7 @@ import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
 
+import mg.faneva.summermvc.annotation.Auth;
 import mg.faneva.summermvc.annotation.Controller;
 import mg.faneva.summermvc.annotation.Json;
 import mg.faneva.summermvc.annotation.RequestMapping;
@@ -154,19 +155,33 @@ public class ControllerScanner {
 
 
                     /*
+                     * SPRINT 10
+                     *
+                     * Vérifie si la méthode possède
+                     * @Auth
+                     */
+                    boolean auth =
+                            method.isAnnotationPresent(
+                                    Auth.class
+                            );
+
+
+                    /*
                      * Création du Mapping
                      *
                      * Le Mapping contient maintenant :
                      * - le Controller
                      * - la méthode
                      * - si elle retourne du JSON
+                     * - si elle exige d'être authentifié
                      */
                     routes.put(
                             key,
                             new Mapping(
                                     clazz,
                                     method,
-                                    json
+                                    json,
+                                    auth
                             )
                     );
                 }

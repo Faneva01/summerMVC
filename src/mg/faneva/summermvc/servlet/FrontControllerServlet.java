@@ -10,6 +10,7 @@ import jakarta.servlet.annotation.MultipartConfig;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 
 import mg.faneva.summermvc.mapping.Mapping;
 import mg.faneva.summermvc.mapping.UrlMethod;
@@ -94,6 +95,28 @@ public class FrontControllerServlet extends HttpServlet {
         return result;
     }
 
+    /*
+     * SPRINT 10
+     *
+     * L'utilisateur est authentifié si la variable de session
+     * configurée dans web.xml (auth-variable) est présente.
+     */
+    private boolean isAuthenticated(HttpServletRequest request) {
+
+        String authVariable =
+                (String) getServletContext().getAttribute("authVariable");
+
+        if (authVariable == null || authVariable.isEmpty()) {
+            return false;
+        }
+
+        // false : ne pas créer de session pour un visiteur anonyme
+        HttpSession httpSession = request.getSession(false);
+
+        return httpSession != null
+                && httpSession.getAttribute(authVariable) != null;
+    }
+
 
 
 
@@ -134,6 +157,35 @@ public class FrontControllerServlet extends HttpServlet {
             Mapping mapping =
                     routes.get(key);
             try {
+
+                /*
+                 * SPRINT 10
+                 *
+                 * Si la méthode possède
+                 * l'annotation @Auth,
+                 * elle n'est invoquée que
+                 * si l'utilisateur est authentifié.
+                 */
+                if(mapping.isAuth() && !isAuthenticated(request)){
+
+                    response.setStatus(
+                        HttpServletResponse.SC_UNAUTHORIZED
+                    );
+
+                    response.setContentType(
+                        "text/html;charset=UTF-8"
+                    );
+
+                    PrintWriter out =
+                            response.getWriter();
+
+                    out.println(
+                        "Authentification requise"
+                    );
+
+                    return;
+
+                }
 
                 /*
                  * Exécution du Controller
