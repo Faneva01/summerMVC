@@ -15,6 +15,8 @@ import java.util.Map;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Part;
 
+import mg.faneva.summermvc.session.MySession;
+
 public class DataBinder {
 
     /**
@@ -49,7 +51,15 @@ public class DataBinder {
                 arguments[i] = convert(value, type);
             }
 
-            // Cas 2 : objet Java
+            // Cas 2 : session (Sprint 9)
+            // Le map de MySession est rempli à partir de la HttpSession.
+            else if (type == MySession.class) {
+                MySession session = new MySession();
+                session.load(request.getSession());
+                arguments[i] = session;
+            }
+
+            // Cas 3 : objet Java
             else {
                 if (isUploadedFileType(type)) {
                     if (!parameter.isNamePresent()) {
@@ -288,7 +298,7 @@ public class DataBinder {
                 continue;
             }
 
-            // Un objet imbriqué reste null si aucun de ses champs n'est
+            // Un objet imbriqué reste null si aucun de ses champs n'est  Part
             // présent. Les préfixes pointés permettent plusieurs niveaux.
             if (hasNestedParameters(request, propertyPath)) {
                 Object nestedObject = bindObject(
