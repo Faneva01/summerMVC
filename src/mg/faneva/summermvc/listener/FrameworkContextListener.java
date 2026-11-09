@@ -1,4 +1,5 @@
-package mg.faneva.summermvc.listener;import java.util.HashMap;
+package mg.faneva.summermvc.listener;import java.lang.reflect.InvocationTargetException;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;import org.springframework.beans.factory.config.AutowireCapableBeanFactory;
 import org.springframework.web.context.WebApplicationContext;
@@ -74,9 +75,25 @@ public class FrameworkContextListener implements ServletContextListener {
                 // Création des contrôleurr
                 // et injection des dépendances Spring
                 for(Class<?> clazz : controllers){
-                        Object controller =
-                                clazz.getDeclaredConstructor()
-                                .newInstance();
+                        // SPRINT 11
+                        // Un contrôleur impossible à créer bloque le démarrage
+                        Object controller;
+                        try {
+                                controller =
+                                        clazz.getDeclaredConstructor()
+                                        .newInstance();
+                        } catch (NoSuchMethodException | IllegalAccessException
+                                | InstantiationException e) {
+                                throw new Exception(
+                                        "Le contrôleur " + clazz.getName()
+                                        + " doit avoir un constructeur sans argument accessible",
+                                        e);
+                        } catch (InvocationTargetException e) {
+                                throw new Exception(
+                                        "Impossible de construire le contrôleur "
+                                        + clazz.getName(),
+                                        e.getCause());
+                        }
                         beanFactory.autowireBean(controller);
                         beans.put( clazz, controller);
                 }
