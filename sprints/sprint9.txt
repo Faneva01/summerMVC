@@ -1,0 +1,16 @@
+Sprint9:
+
+Session:
+Ataovy izay ahatonga an'ilay session ho disponible ao am controller (methode d'action).
+Eo am methode an controller ...
+
+
+Astuce:
+
+Mi creer classe : MySession:
+- attributs: map , string,
+- Methode mi recuperer
+- Ilay map ao iny fenoina am alalan HttpSession
+- Boucler pour mettre à jour le map
+
+==> But pour eviter d'ajouter l'HTTPSession direct vers le développeur.

@@ -17,6 +17,7 @@ import java.lang.reflect.Method;
 
 import mg.faneva.summermvc.binding.DataBinder;
 import mg.faneva.summermvc.modelview.ModelView;
+import mg.faneva.summermvc.session.MySession;
 
 @MultipartConfig
 public class FrontControllerServlet extends HttpServlet {
@@ -75,7 +76,22 @@ public class FrontControllerServlet extends HttpServlet {
         Object[] arguments = binder.bind(request, method);
 
         // Invocation de la méthode avec les arguments
-        return method.invoke(controller, arguments);
+        Object result = method.invoke(controller, arguments);
+
+        /*
+         * SPRINT 9
+         *
+         * Si la méthode a reçu une MySession,
+         * ses modifications sont reportées
+         * dans la HttpSession.
+         */
+        for (Object argument : arguments) {
+            if (argument instanceof MySession) {
+                ((MySession) argument).update(request.getSession());
+            }
+        }
+
+        return result;
     }
 
 
