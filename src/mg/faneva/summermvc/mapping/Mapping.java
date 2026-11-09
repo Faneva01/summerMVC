@@ -10,14 +10,18 @@ public class Mapping {
 
     private boolean json;
 
+    private boolean auth;
+
     public Mapping(
             Class<?> controller,
             Method method,
-            boolean json) {
+            boolean json,
+            boolean auth) {
 
         this.controller = controller;
         this.method = method;
         this.json = json;
+        this.auth = auth;
     }
 
     public Class<?> getController() {
@@ -30,5 +34,9 @@ public class Mapping {
 
     public boolean isJson() {
         return json;
+    }
+
+    public boolean isAuth() {
+        return auth;
     }
 }

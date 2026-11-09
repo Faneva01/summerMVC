@@ -26,6 +26,25 @@ public class FrameworkContextListener implements ServletContextListener {
                 // Scanner les routes
                 HashMap<UrlMethod, Mapping> routes = scanner.scanMethods( controllers  );            
             
+                // SPRINT 10
+                // Nom de la variable de session qui prouve l'authentification
+                String authVariable = context.getInitParameter( "auth-variable" );
+                if(authVariable != null){
+                        authVariable = authVariable.trim();
+                }
+
+                // Une route @Auth sans variable configurée ne peut pas être protégée
+                for(Mapping mapping : routes.values()){
+                        if(mapping.isAuth()
+                                && (authVariable == null || authVariable.isEmpty())){
+                                throw new Exception(
+                                        "Init-param 'auth-variable' manquant dans web.xml. "
+                                        + "Il est obligatoire pour la méthode @Auth : "
+                                        + mapping.getController().getName()
+                                        + "." + mapping.getMethod().getName());
+                        }
+                }
+
                 //Récupération du contexte Spring
              
                 WebApplicationContext springContext = WebApplicationContextUtils.getRequiredWebApplicationContext( context );
@@ -46,6 +65,7 @@ public class FrameworkContextListener implements ServletContextListener {
                 //Stockage dans le ServletContext
                 context.setAttribute( "routes",routes);
                 context.setAttribute( "beans", beans);
+                context.setAttribute( "authVariable", authVariable);
             
                 System.out.println("===== SummerMVC Started =====");
 
