@@ -167,6 +167,19 @@ public class ControllerScanner {
 
 
                     /*
+                     * SPRINT 10 BIS
+                     *
+                     * Rôles autorisés par @Auth.
+                     * Tableau vide si aucun rôle n'est exigé.
+                     */
+                    String[] roles =
+                            auth
+                            ? method.getAnnotation(
+                                    Auth.class).roles()
+                            : new String[0];
+
+
+                    /*
                      * Création du Mapping
                      *
                      * Le Mapping contient maintenant :
@@ -174,6 +187,7 @@ public class ControllerScanner {
                      * - la méthode
                      * - si elle retourne du JSON
                      * - si elle exige d'être authentifié
+                     * - les rôles autorisés
                      */
                     routes.put(
                             key,
@@ -181,7 +195,8 @@ public class ControllerScanner {
                                     clazz,
                                     method,
                                     json,
-                                    auth
+                                    auth,
+                                    roles
                             )
                     );
                 }
